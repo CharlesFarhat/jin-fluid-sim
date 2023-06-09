@@ -3,7 +3,7 @@ add_executable(mainSimulator fluidSimulator.cpp fluidSimulator.h)
 
 add_subdirectory(imgui_backend)
 
-target_link_libraries(mainSimulator PRIVATE utils imgui_backend SDL2-static SDL2main)
+target_link_libraries(mainSimulator PRIVATE utils imgui_backend SDL2 SDL2main)
 
 if(APPLE)
     find_library(OpenGL_Framework OpenGL)

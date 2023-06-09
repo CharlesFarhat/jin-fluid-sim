@@ -1,5 +1,9 @@
 #include "fluidSimulator.h"
 
+// SDl workaround...
+#include <SDL.h>
+#undef main
+
 // Set OpenGL compiler version
 constexpr auto GLSL_VERSION = "#version 130";
 
@@ -68,6 +72,10 @@ namespace Application {
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
         return true;
+    }
+
+    void FluidSimulator::run() {
+        LOG_INFO("Run !");
     }
 
 }

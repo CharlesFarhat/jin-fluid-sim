@@ -5,10 +5,13 @@
 #include <string>
 #include <memory>
 #include <glad/gl.h>
-#include <SDL.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl.h>
+#include <SDL.h>
+#undef main
+
+
 
 // My libs
 #include "Logger.h"
