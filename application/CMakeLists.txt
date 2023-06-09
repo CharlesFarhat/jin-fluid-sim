@@ -1,6 +1,9 @@
 # main app launcher cmake file
 add_executable(mainSimulator fluidSimulator.cpp fluidSimulator.h)
-target_link_libraries(mainSimulator PUBLIC src)
+
+add_subdirectory(imgui_backend)
+
+target_link_libraries(mainSimulator PRIVATE utils imgui_backend SDL2-static SDL2main)
 
 if(APPLE)
     find_library(OpenGL_Framework OpenGL)

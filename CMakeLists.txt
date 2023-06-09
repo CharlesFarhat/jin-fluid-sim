@@ -3,15 +3,15 @@ cmake_minimum_required(VERSION 3.24) # This is because of OVERRIDE_CMAKE in fetc
 # include cmake plugins
 include(FetchContent)
 
-
+# Our project
 project(FluidSimulation VERSION 0.1.0 LANGUAGES CXX)
 
 # CMake/C++ options
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(BUILD_SHARED_LIBS FALSE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+#set(BUILD_SHARED_LIBS FALSE)
 
 if(WIN32)
   # SonarLint support for CMake requires the following flag to be set on.
@@ -54,7 +54,7 @@ FetchContent_Declare(
         GIT_PROGRESS    TRUE
 )
 FetchContent_MakeAvailable(SDL2)
-include_directories(${SDL2_SOURCE_DIR}/include)
+include_directories(${SDL2_SOURCE_DIR}/include) # bug fix in fetch cmake of SDL
 
 # import imgui and glad
 FetchContent_Declare(
@@ -63,10 +63,13 @@ FetchContent_Declare(
         GIT_TAG v4.0.0
 )
 FetchContent_MakeAvailable(imgui-glad-glm)
+include_directories(${GLAD_SOURCE_DIR}/include)
+include_directories(${IMGUI_SOURCE_DIR})
 
 
 ###########################################
 ###### Include our project src ############
 ###########################################
-add_subdirectory(application)
 add_subdirectory(src)
+add_subdirectory(application)
+
