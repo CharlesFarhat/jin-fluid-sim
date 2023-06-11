@@ -11,11 +11,11 @@
 #include <SDL.h>
 #undef main
 
-
-
 // My libs
 #include "Logger.h"
 #include "Math.hpp" // Egor Yusov lib
+#include <GraphicsEngine.h>
+#include "Params.h"
 
 
 namespace Application {
@@ -51,8 +51,11 @@ namespace Application {
 
         Math::int2 windowSize;
 
+
+        // Rendering related stuff
         SDL_Window* window;
         SDL_GLContext OGLContext;
+        std::unique_ptr<Render::GraphicsEngine> graphicsEngine;
 
         std::string appName;
 

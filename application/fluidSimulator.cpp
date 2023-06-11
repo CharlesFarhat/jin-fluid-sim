@@ -2,6 +2,7 @@
 
 // SDl workaround...
 #include <SDL.h>
+
 #undef main
 
 // Set OpenGL compiler version
@@ -15,6 +16,11 @@ namespace Application {
         if (!initWindow()) {
             LOG_ERROR("Failed to init main window");
             exit(0);
+        }
+
+        if (!initGraphicalEngine()) {
+            LOG_ERROR("Graphical engine could not be init");
+            return;
         }
 
         LOG_INFO("System initialize !");
@@ -67,11 +73,27 @@ namespace Application {
         ImGui_ImplSDL2_InitForOpenGL(window, OGLContext);
         ImGui_ImplOpenGL3_Init(GLSL_VERSION);
 
-        ImGuiIO& io = ImGui::GetIO();
-        (void)io;
+        ImGuiIO &io = ImGui::GetIO();
+        (void) io;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
         return true;
+    }
+
+    bool FluidSimulator::initGraphicalEngine() {
+        // Create render engine
+        Render::EngineParams params;
+        params.maxNbParticles = Utils::ALL_NB_PARTICLES.crbegin()->first;
+        params.boxSize = Utils::BOX_SIZE;
+        params.gridRes = Utils::GRID_RES;
+        params.aspectRatio = (float)windowSize.x / (float)windowSize.y;
+
+        graphicsEngine = std::make_unique<Render::GraphicsEngine>(params);
+
+        if (graphicsEngine != nullptr) {
+            return true;
+        }
+        return false;
     }
 
     void FluidSimulator::run() {
