@@ -21,6 +21,8 @@ Render::Shader::Shader(const char *vertSrcFile, const char *fragSrcFile) {
     glLinkProgram(programID);
 
     GLint status;
+    glGetProgramiv(programID, GL_LINK_STATUS, &status);
+
     if (status == GL_FALSE) {
         LOG_ERROR("Shader could'nt be linked");
         return;
@@ -44,6 +46,20 @@ void Render::Shader::compileShader(GLenum type, const char *source) const {
 
     // Added debug
     if (status == GL_FALSE) {
+        GLint maxLength = 0;
+        glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &maxLength);
+
+        // The maxLength includes the NULL character
+        std::vector<GLchar> errorLog(maxLength);
+        glGetShaderInfoLog(shaderID, maxLength, &maxLength, &errorLog[0]);
+
+        // Convert to string and print in LOG
+        std::string err(errorLog.begin(), errorLog.end());
+        LOG_ERROR(err);
+
+        // Provide the infolog in whatever manor you deem best.
+        // Exit with failure.
+        glDeleteShader(shaderID); // Don't leak the shader.
         LOG_ERROR("Failed to create shader");
         return;
     }

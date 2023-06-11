@@ -49,7 +49,7 @@ Render::GraphicsEngine::~GraphicsEngine() {
 }
 
 void Render::GraphicsEngine::buildShaders() {
-    pointCloudShader = std::make_unique<Shader>("./GLSL/PointCloudFragShader.glsl", "./GLSL/PointCloudVertShader.glsl");
+    pointCloudShader = std::make_unique<Shader>("./GLSL/PointCloudVertShader.glsl", "./GLSL/PointCloudFragShader.glsl");
     boxShader = std::make_unique<Shader>("./GLSL/BoxVertShader.glsl", "./GLSL/FragShader.glsl");
     gridShader = std::make_unique<Shader>("./GLSL/GridVertShader.glsl", "./GLSL/FragShader.glsl");
     targetShader = std::make_unique<Shader>("./GLSL/TargetVertShader.glsl", "./GLSL/FragShader.glsl");

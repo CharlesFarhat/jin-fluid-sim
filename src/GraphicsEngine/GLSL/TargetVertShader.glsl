@@ -1,5 +1,5 @@
 #version 330 core
-layout(location = 5) in vec3 aPos;
+    layout(location = 5) in vec3 aPos;
 
 uniform mat4 u_projView;
 out vec4 vertexColor;

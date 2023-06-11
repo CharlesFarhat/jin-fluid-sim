@@ -1,5 +1,5 @@
 #version 330 core
-layout(location = 3) in vec3 aPos;
+    layout(location = 3) in vec3 aPos;
 layout(location = 4) in float vertexDetector;
 
 uniform mat4 u_projView;

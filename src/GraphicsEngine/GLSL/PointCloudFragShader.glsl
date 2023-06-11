@@ -1,5 +1,5 @@
 #version 330 core
-in vec4 vertexPos;
+    in vec4 vertexPos;
 in vec4 vertexCol;
 
 uniform vec3 u_cameraPos;
