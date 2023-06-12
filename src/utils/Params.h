@@ -47,4 +47,13 @@ namespace Utils {
 
 // Length of one side of the cells forming the 3D grid containing all the particles
     static constexpr int GRID_RES = 30;
+
+    static std::array<int, 3> GetNbParticlesSubdiv3D(NbParticles nbParts)
+    {
+        const auto& it = ALL_NB_PARTICLES.find(nbParts);
+        if (it != ALL_NB_PARTICLES.end())
+            return it->second.subdiv3D;
+        else
+            return { 0, 0, 0 };
+    };
 }

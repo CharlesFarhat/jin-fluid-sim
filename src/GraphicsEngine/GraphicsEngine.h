@@ -2,6 +2,7 @@
 // Created by charl on 6/11/2023.
 //
 #pragma once
+
 #include "Math.hpp"
 #include <glad/gl.h>
 #include <memory>
@@ -34,15 +35,53 @@ namespace Render {
 
         ~GraphicsEngine();
 
+        // Getter
+        [[nodiscard]] inline Math::float3 cameraPos() const {
+            return camera ? camera->cameraPos() : Math::float3(0.0f, 0.0f, 0.0f);
+        }
+
+        [[nodiscard]] inline Math::float3 focusPos() const {
+            return camera ? camera->focusPos() : Math::float3(0.0f, 0.0f, 0.0f);
+        }
+
+        [[nodiscard]] inline bool isCameraAutoRotating() const { return camera && camera->isAutoRotating(); }
+
+        //Setters
+        inline void autoRotateCamera(bool autoRotate) {
+            if (camera)
+                camera->enableAutoRotating(autoRotate);
+        }
+
+        inline void resetCamera() {
+            if (camera)
+                camera->reset();
+        }
+
+        inline void setWindowSize(Math::int2 windowSize) {
+            if (camera)
+                camera->setSceneAspectRatio((float) windowSize.x / windowSize.y);
+        }
+
+        inline GLuint getPointCloudCoordVBO() const { return pointCloudCoordVBO; }
+        inline GLuint getPointCloudColorVBO() const { return pointCloudColorVBO; }
+        inline GLuint getCameraCoordVBO() const { return cameraVBO; }
+        inline GLuint getGridDetectorVBO() const { return gridDetectorVBO; }
+
     private:
         // Graphical Pipeline : build shaders --> compute on GPU
         void buildShaders();
 
         // Init all rendering components
         void initCamera(float sceneAspectRation);
+
         void loadCameraPosition();
+
         void initPointCloud();
+
         void initBox();
+
+        void initGrid();
+
         void initTarget();
 
 
@@ -61,10 +100,12 @@ namespace Render {
 
         // Graphical Object
         std::unique_ptr<Camera> camera;
-        const GLuint pointCloudPosAttribIndex { 0 };
-        const GLuint pointCloudColAttribIndex { 1 };
-        const GLuint boxPosAttribIndex { 2 };
-        const GLuint targetPosAttribIndex { 5 };
+        const GLuint pointCloudPosAttribIndex{0};
+        const GLuint pointCloudColAttribIndex{1};
+        const GLuint boxPosAttribIndex{2};
+        const GLuint targetPosAttribIndex{5};
+        const GLuint gridPosAttribIndex { 3 };
+        const GLuint gridDetectorAttribIndex { 4 };
 
         // Shader for pointCloud, box and grid
         std::unique_ptr<Shader> pointCloudShader;
@@ -80,21 +121,24 @@ namespace Render {
         GLuint pointCloudCoordVBO;
         GLuint pointCloudColorVBO;
         GLuint targetVBO;
+        GLuint gridDetectorVBO; // ATTENTION : not implemented because of no grid init !
+        GLuint gridEBO;
+        GLuint gridPosVBO;
 
 
         typedef std::array<float, 3> Vertex;
         // Cube geometry for rendering
-        const std::array<Vertex, 8> refCubeVertices {
-                Vertex({ 1.f, -1.f, -1.f }),
-                Vertex({ 1.f, 1.f, -1.f }),
-                Vertex({ -1.f, 1.f, -1.f }),
-                Vertex({ -1.f, -1.f, -1.f }),
-                Vertex({ 1.f, -1.f, 1.f }),
-                Vertex({ 1.f, 1.f, 1.f }),
-                Vertex({ -1.f, 1.f, 1.f }),
-                Vertex({ -1.f, -1.f, 1.f })
+        const std::array<Vertex, 8> refCubeVertices{
+                Vertex({1.f, -1.f, -1.f}),
+                Vertex({1.f, 1.f, -1.f}),
+                Vertex({-1.f, 1.f, -1.f}),
+                Vertex({-1.f, -1.f, -1.f}),
+                Vertex({1.f, -1.f, 1.f}),
+                Vertex({1.f, 1.f, 1.f}),
+                Vertex({-1.f, 1.f, 1.f}),
+                Vertex({-1.f, -1.f, 1.f})
         };
-        const std::array<GLuint, 24> refCubeIndices {
+        const std::array<GLuint, 24> refCubeIndices{
                 0, 1,
                 1, 2,
                 2, 3,

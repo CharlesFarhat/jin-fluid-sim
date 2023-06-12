@@ -1,2 +1,4 @@
 add_subdirectory(utils)
 add_subdirectory(GraphicsEngine)
+add_subdirectory(GraphicalInterface)
+add_subdirectory(PhysicsEngine)

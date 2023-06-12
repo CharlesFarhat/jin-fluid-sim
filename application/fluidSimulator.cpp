@@ -10,7 +10,10 @@ constexpr auto GLSL_VERSION = "#version 130";
 
 namespace Application {
 
-    FluidSimulator::FluidSimulator() : init(false), appName("Realtime Fluid Simulator"), windowSize(1920, 1080) {
+    FluidSimulator::FluidSimulator() : windowSize(1920, 1080),
+                                       simType(Physics::SimType::POSITION_BASED_FLUIDS),
+                                       appName("Realtime Fluid Simulator"),
+                                       init(false) {
         LOG_INFO("Starting a RT physicaly accurate fluid simulator !");
 
         if (!initWindow()) {
@@ -20,6 +23,16 @@ namespace Application {
 
         if (!initGraphicalEngine()) {
             LOG_ERROR("Graphical engine could not be init");
+            return;
+        }
+
+        if (!initGraphicsControls()) {
+            LOG_ERROR("Graphic control widgets not init !");
+            return;
+        }
+
+        if (!initPhysicsEngine()) {
+            LOG_ERROR("Failed to init physics Engine !");
             return;
         }
 
@@ -60,8 +73,7 @@ namespace Application {
         SDL_GL_SetSwapInterval(1); // Enable vsync
 
         // init OpenGL
-        bool GL_err = gladLoaderLoadGL() == 0;
-        if (GL_err) {
+        if (bool GL_err = gladLoaderLoadGL() == 0) {
             LOG_ERROR("OpenGL failed to load loader !");
             return false;
         }
@@ -86,7 +98,7 @@ namespace Application {
         params.maxNbParticles = Utils::ALL_NB_PARTICLES.crbegin()->first;
         params.boxSize = Utils::BOX_SIZE;
         params.gridRes = Utils::GRID_RES;
-        params.aspectRatio = (float)windowSize.x / (float)windowSize.y;
+        params.aspectRatio = (float) windowSize.x / (float) windowSize.y;
 
         graphicsEngine = std::make_unique<Render::GraphicsEngine>(params);
 
@@ -98,6 +110,52 @@ namespace Application {
 
     void FluidSimulator::run() {
         LOG_INFO("Run !");
+    }
+
+    bool FluidSimulator::initGraphicsControls() {
+        // Get is used to retreive the base pointer of graphics engine, we don't have ownership
+        graphicsControls = std::make_unique<UI::GraphicsControls>(graphicsEngine.get());
+
+        if (!graphicsControls) {
+            LOG_ERROR("Graphics control widget not init");
+            return false;
+        }
+        return true;
+    }
+
+    bool FluidSimulator::initPhysicsEngine() {
+        Physics::ModelParams params;
+        params.maxNbParticles = Utils::ALL_NB_PARTICLES.crbegin()->first;
+        params.boxSize = Utils::BOX_SIZE;
+        params.gridRes = Utils::GRID_RES;
+        params.velocity = 1.0f;
+        params.particlePosVBO = (unsigned int) graphicsEngine->getPointCloudCoordVBO();
+        params.particleColVBO = (unsigned int) graphicsEngine->getPointCloudColorVBO();
+        params.cameraVBO = (unsigned int) graphicsEngine->getCameraCoordVBO();
+        params.gridVBO = (unsigned int) graphicsEngine->getGridDetectorVBO();
+
+        if (physicsEngine) {
+            LOG_DEBUG("Physics engine already existing, resetting it");
+            physicsEngine.reset();
+        }
+
+        switch ((int) simType) {
+            case Physics::SimType::POSITION_BASED_FLUIDS:
+                physicsEngine = std::make_unique<Physics::PositionBasedFluids>(params);
+                break;
+            case Physics::SimType::LATTICE_BOLTZMANN:
+                LOG_INFO("Not implemented Yet !");
+                break;
+            case Physics::SimType::FLIP:
+                LOG_INFO("Not implemented Yet !");
+                break;
+        }
+
+        if (!physicsEngine) {
+            LOG_ERROR("Physic engine not runnig !");
+            return false;
+        }
+        return true;
     }
 
 }

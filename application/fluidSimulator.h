@@ -16,7 +16,9 @@
 #include "Math.hpp" // Egor Yusov lib
 #include <GraphicsEngine.h>
 #include "Params.h"
-
+#include "GraphicsControls.h"
+#include "BasePhysicModel.h"
+#include "PositionBasedFluids.h"
 
 namespace Application {
 
@@ -40,7 +42,7 @@ namespace Application {
         bool initWindow();
         bool initGraphicalEngine();
         bool initPhysicsEngine();
-        bool initGraphicalWidget();
+        bool initGraphicsControls();
         bool initPhysicsWidget();
         bool closeWindow();
         void checkMouseState();
@@ -56,6 +58,13 @@ namespace Application {
         SDL_Window* window;
         SDL_GLContext OGLContext;
         std::unique_ptr<Render::GraphicsEngine> graphicsEngine;
+
+        // Widget related varibales
+        std::unique_ptr<UI::GraphicsControls> graphicsControls;
+
+        // Physics related variables
+        std::unique_ptr<Physics::BasePhysicModel> physicsEngine;
+        Physics::SimType simType; // Selected model
 
         std::string appName;
 

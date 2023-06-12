@@ -4,4 +4,9 @@
 #pragma once
 #include <string>
 
-const std::string FloatToStr(float val, size_t precision = 10);
+namespace Utils
+{
+    std::string GetSrcDir();
+    std::string FloatToStr(float val, size_t precision = 10);
+}
+

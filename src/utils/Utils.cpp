@@ -7,9 +7,15 @@
 #include <ostream>
 #include <sstream>
 
-const std::string FloatToStr(float val, size_t precision)
-{
-    std::ostringstream str;
-    str << std::fixed << std::setprecision(precision) << std::setfill('0') << val << "f";
-    return str.str();
+namespace Utils {
+
+    std::string FloatToStr(float val, size_t precision) {
+        std::ostringstream str;
+        str << std::fixed << std::setprecision(precision) << std::setfill('0') << val << "f";
+        return str.str();
+    }
+
+    std::string Utils::GetSrcDir() {
+        return std::string(SOURCE_DIR);
+    }
 }

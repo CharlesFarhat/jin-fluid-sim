@@ -7,6 +7,7 @@
 
 
 #include <array>
+#include <vector>
 #include "GraphicsEngine.h"
 
 Render::GraphicsEngine::GraphicsEngine(Render::EngineParams params) : nbMaxParticules(params.maxNbParticles),
@@ -36,6 +37,8 @@ Render::GraphicsEngine::GraphicsEngine(Render::EngineParams params) : nbMaxParti
     initPointCloud();
 
     initBox();
+
+    initGrid();
 
     initTarget();
 }
@@ -129,4 +132,81 @@ void Render::GraphicsEngine::initTarget() {
     glEnableVertexAttribArray(targetPosAttribIndex);
     glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(float), &targetCoord, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Render::GraphicsEngine::initGrid() {
+    float cellSize = 1.0f * boxSize / gridResolution;
+    std::array<Vertex, 8> localCellCoords = refCubeVertices;
+    for (auto& vertex : localCellCoords)
+    {
+        float x = vertex[0] * cellSize * 0.5f;
+        float y = vertex[1] * cellSize * 0.5f;
+        float z = vertex[2] * cellSize * 0.5f;
+        vertex = { x, y, z };
+    }
+
+    size_t centerIndex = 0;
+    size_t numCells = gridResolution * gridResolution * gridResolution;
+    float firstPos = -(float)boxSize / 2.0f + 0.5f * cellSize;
+    std::vector<Vertex> globalCellCenterCoords(numCells);
+    for (int x = 0; x < gridResolution; ++x)
+    {
+        float xCoord = firstPos + x * cellSize;
+        for (int y = 0; y < gridResolution; ++y)
+        {
+            float yCoord = firstPos + y * cellSize;
+            for (int z = 0; z < gridResolution; ++z)
+            {
+                float zCoord = firstPos + z * cellSize;
+                globalCellCenterCoords.at(centerIndex++) = { xCoord, yCoord, zCoord };
+            }
+        }
+    }
+
+    size_t cornerIndex = 0;
+    std::vector<Vertex> globalCellCoords(numCells * 8);
+    for (const auto& centerCoords : globalCellCenterCoords)
+    {
+        for (const auto& cornerCoords : localCellCoords)
+        {
+            globalCellCoords.at(cornerIndex)[0] = cornerCoords[0] + centerCoords[0];
+            globalCellCoords.at(cornerIndex)[1] = cornerCoords[1] + centerCoords[1];
+            globalCellCoords.at(cornerIndex)[2] = cornerCoords[2] + centerCoords[2];
+            ++cornerIndex;
+        }
+    }
+
+    glGenBuffers(1, &gridPosVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, gridPosVBO);
+    glVertexAttribPointer(gridPosAttribIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(gridPosAttribIndex);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(globalCellCoords.front()) * globalCellCoords.size(), globalCellCoords.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Filled by OpenCL
+    glGenBuffers(1, &gridDetectorVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, gridDetectorVBO);
+    glVertexAttribPointer(gridDetectorAttribIndex, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+    glEnableVertexAttribArray(gridDetectorAttribIndex);
+    glBufferData(GL_ARRAY_BUFFER, 8 * numCells * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    size_t index = 0;
+    GLuint globalOffset = 0;
+    std::vector<GLuint> globalCellIndices(numCells * 24);
+    for (const auto& centerCoords : globalCellCenterCoords)
+    {
+        for (const auto& localIndex : refCubeIndices)
+        {
+            globalCellIndices.at(index++) = localIndex + globalOffset;
+        }
+        globalOffset += 8;
+    }
+
+    size_t gridIndexSize = sizeof(globalCellIndices.front()) * globalCellIndices.size();
+    glGenBuffers(1, &gridEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, gridIndexSize, globalCellIndices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 }
