@@ -137,38 +137,32 @@ void Render::GraphicsEngine::initTarget() {
 void Render::GraphicsEngine::initGrid() {
     float cellSize = 1.0f * boxSize / gridResolution;
     std::array<Vertex, 8> localCellCoords = refCubeVertices;
-    for (auto& vertex : localCellCoords)
-    {
+    for (auto &vertex: localCellCoords) {
         float x = vertex[0] * cellSize * 0.5f;
         float y = vertex[1] * cellSize * 0.5f;
         float z = vertex[2] * cellSize * 0.5f;
-        vertex = { x, y, z };
+        vertex = {x, y, z};
     }
 
     size_t centerIndex = 0;
     size_t numCells = gridResolution * gridResolution * gridResolution;
-    float firstPos = -(float)boxSize / 2.0f + 0.5f * cellSize;
+    float firstPos = -(float) boxSize / 2.0f + 0.5f * cellSize;
     std::vector<Vertex> globalCellCenterCoords(numCells);
-    for (int x = 0; x < gridResolution; ++x)
-    {
+    for (int x = 0; x < gridResolution; ++x) {
         float xCoord = firstPos + x * cellSize;
-        for (int y = 0; y < gridResolution; ++y)
-        {
+        for (int y = 0; y < gridResolution; ++y) {
             float yCoord = firstPos + y * cellSize;
-            for (int z = 0; z < gridResolution; ++z)
-            {
+            for (int z = 0; z < gridResolution; ++z) {
                 float zCoord = firstPos + z * cellSize;
-                globalCellCenterCoords.at(centerIndex++) = { xCoord, yCoord, zCoord };
+                globalCellCenterCoords.at(centerIndex++) = {xCoord, yCoord, zCoord};
             }
         }
     }
 
     size_t cornerIndex = 0;
     std::vector<Vertex> globalCellCoords(numCells * 8);
-    for (const auto& centerCoords : globalCellCenterCoords)
-    {
-        for (const auto& cornerCoords : localCellCoords)
-        {
+    for (const auto &centerCoords: globalCellCenterCoords) {
+        for (const auto &cornerCoords: localCellCoords) {
             globalCellCoords.at(cornerIndex)[0] = cornerCoords[0] + centerCoords[0];
             globalCellCoords.at(cornerIndex)[1] = cornerCoords[1] + centerCoords[1];
             globalCellCoords.at(cornerIndex)[2] = cornerCoords[2] + centerCoords[2];
@@ -180,7 +174,8 @@ void Render::GraphicsEngine::initGrid() {
     glBindBuffer(GL_ARRAY_BUFFER, gridPosVBO);
     glVertexAttribPointer(gridPosAttribIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(gridPosAttribIndex);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(globalCellCoords.front()) * globalCellCoords.size(), globalCellCoords.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(globalCellCoords.front()) * globalCellCoords.size(), globalCellCoords.data(),
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Filled by OpenCL
@@ -194,10 +189,8 @@ void Render::GraphicsEngine::initGrid() {
     size_t index = 0;
     GLuint globalOffset = 0;
     std::vector<GLuint> globalCellIndices(numCells * 24);
-    for (const auto& centerCoords : globalCellCenterCoords)
-    {
-        for (const auto& localIndex : refCubeIndices)
-        {
+    for (const auto &centerCoords: globalCellCenterCoords) {
+        for (const auto &localIndex: refCubeIndices) {
             globalCellIndices.at(index++) = localIndex + globalOffset;
         }
         globalOffset += 8;
@@ -209,4 +202,23 @@ void Render::GraphicsEngine::initGrid() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, gridIndexSize, globalCellIndices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+}
+
+void Render::GraphicsEngine::checkMouseEvents(Render::UserAction action, Math::float2 mouseDisplacement) {
+    switch (action) {
+        case UserAction::TRANSLATION: {
+            const auto displacement = 0.06f * mouseDisplacement;
+            camera->translate(-displacement.x, displacement.y);
+            break;
+        }
+        case UserAction::ROTATION: {
+            const auto angle = mouseDisplacement * Math::PI_F / 180.0f * 0.5;
+            camera->rotate(angle.y, angle.x);
+            break;
+        }
+        case UserAction::ZOOM: {
+            camera->zoom(0.5f * mouseDisplacement.x);
+            break;
+        }
+    }
 }

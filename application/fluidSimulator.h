@@ -47,18 +47,19 @@ namespace Application {
         bool initPhysicsWidget();
         bool closeWindow();
         void checkMouseState();
-        bool checkSDL();
+        bool checkAppStatus();
         void displayMainWidget();
-        bool popUpMessage(const std::string& title, const std::string& message) const;
 
 
         Math::int2 windowSize;
+        Math::int2 mousePrevPos;
 
 
         // Rendering related stuff
         SDL_Window* window;
         SDL_GLContext OGLContext;
         std::unique_ptr<Render::GraphicsEngine> graphicsEngine;
+        ImVec4 backGroundColor;
 
         // Widget related varibales
         std::unique_ptr<UI::GraphicsControls> graphicsControls;

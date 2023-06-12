@@ -13,7 +13,8 @@ namespace Application {
     FluidSimulator::FluidSimulator() : windowSize(1920, 1080),
                                        simType(Physics::SimType::POSITION_BASED_FLUIDS),
                                        appName("Realtime Fluid Simulator"),
-                                       init(false) {
+                                       init(false),
+                                       backGroundColor(0.0f, 0.0f, 0.0f, 1.00f) {
         LOG_INFO("Starting a RT physicaly accurate fluid simulator !");
 
         if (!initWindow()) {
@@ -113,10 +114,6 @@ namespace Application {
         return false;
     }
 
-    void FluidSimulator::run() {
-        LOG_INFO("Run !");
-    }
-
     bool FluidSimulator::initGraphicsControls() {
         // Get is used to retreive the base pointer of graphics engine, we don't have ownership
         graphicsControls = std::make_unique<UI::GraphicsControls>(graphicsEngine.get());
@@ -172,6 +169,185 @@ namespace Application {
         return true;
     }
 
+    /*********************************************************************/
+    /*********************************************************************/
+    //                                                                   //
+    //                                                                   //
+    //                      RUN MAIN FUNCTION                            //
+    //                                                                   //
+    //                                                                   //
+    /*********************************************************************/
+    /*********************************************************************/
+
+
+    void FluidSimulator::run() {
+        LOG_INFO("Start RUN function");
+
+        bool stopRunning = false;
+        while (!stopRunning) {
+            stopRunning = checkAppStatus();
+
+            checkMouseState();
+
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL2_NewFrame(window);
+            ImGui::NewFrame();
+
+            // Display main control panel
+            displayMainWidget();
+
+            // Draw here all widgets
+
+
+            ImGuiIO &io = ImGui::GetIO();
+            glViewport(0, 0, (int) io.DisplaySize.x, (int) io.DisplaySize.y);
+
+            glClearColor(backGroundColor.x, backGroundColor.y, backGroundColor.z, backGroundColor.w);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+            ImGui::Render();
+
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            SDL_GL_SwapWindow(window);
+
+        }
+
+        closeWindow();
+
+    }
+
+    bool FluidSimulator::checkAppStatus() {
+        bool stopRunning = false;
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            switch (event.type) {
+                case SDL_QUIT:
+                    stopRunning = true;
+                    break;
+                case SDL_WINDOWEVENT :
+                    if (event.window.event == SDL_WINDOWEVENT_CLOSE &&
+                        event.window.windowID == SDL_GetWindowID(window)) {
+                        stopRunning = true;
+                    }
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        windowSize = Math::int2(event.window.data1, event.window.data2);
+                        graphicsEngine->setWindowSize(windowSize);
+                    }
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    if (event.button.button == SDL_BUTTON_LEFT || event.button.button == SDL_BUTTON_RIGHT) {
+                        Math::int2 currentMousePos;
+                        SDL_GetMouseState(&currentMousePos.x, &currentMousePos.y);
+                        mousePrevPos = currentMousePos;
+                    }
+                    break;
+                case SDL_MOUSEWHEEL:
+                    if (event.wheel.y > 0) {
+                        graphicsEngine->checkMouseEvents(Render::UserAction::ZOOM, Math::float2(-1.2f, 0.f));
+                    } else if (event.wheel.y < 0) {
+                        graphicsEngine->checkMouseEvents(Render::UserAction::ZOOM, Math::float2(1.2f, 0.f));
+                    }
+                    break;
+                case SDL_KEYDOWN:
+                    bool isPaused = physicsEngine->isPause();
+                    physicsEngine->setPause(!isPaused);
+                    break;
+            }
+        }
+        return stopRunning;
+    }
+
+    void FluidSimulator::checkMouseState() {
+        ImGuiIO &io = ImGui::GetIO();
+        (void) io;
+
+        if (io.WantCaptureMouse)
+            return;
+
+        Math::int2 currentMousePos;
+        auto mouseState = SDL_GetMouseState(&currentMousePos.x, &currentMousePos.y);
+        Math::int2 delta = currentMousePos - mousePrevPos;
+        Math::float2 fDelta((float) delta.x, (float) delta.y);
+
+        if (mouseState & SDL_BUTTON(1)) {
+            graphicsEngine->checkMouseEvents(Render::UserAction::ROTATION, fDelta);
+            mousePrevPos = currentMousePos;
+        } else if (mouseState & SDL_BUTTON(3)) {
+            graphicsEngine->checkMouseEvents(Render::UserAction::TRANSLATION, fDelta);
+            mousePrevPos = currentMousePos;
+        }
+    }
+
+    void FluidSimulator::displayMainWidget() {
+        // First default pos
+        ImGui::SetNextWindowPos(ImVec2(15, 12), ImGuiCond_FirstUseEver);
+
+        ImGui::Begin("Main Panel", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::PushItemWidth(150);
+
+        if (!isInit())
+            return;
+
+        // Selection of the physical model
+        const auto &selModelName = (Physics::ALL_MODELS.find(simType) != Physics::ALL_MODELS.end())
+                                   ? Physics::ALL_MODELS.find(simType)->second
+                                   : Physics::ALL_MODELS.cbegin()->second;
+
+        if (ImGui::BeginCombo("Physical Model", selModelName.c_str())) {
+            for (const auto &model: Physics::ALL_MODELS) {
+                if (ImGui::Selectable(model.second.c_str(), simType == model.first)) {
+                    simType = model.first;
+
+                    if (!initPhysicsEngine()) {
+                        LOG_ERROR("Failed to change physics engine");
+                        return;
+                    }
+
+                    if (!initPhysicsWidget()) {
+                        LOG_ERROR("Failed to change physics widget");
+                        return;
+                    }
+
+                    LOG_INFO("Application correctly switched to {}", Physics::ALL_MODELS.find(simType)->second);
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        bool isOnPaused = physicsEngine->isPause();
+        std::string pauseRun = isOnPaused ? "  Start  " : "  Pause  ";
+        if (ImGui::Button(pauseRun.c_str())) {
+            physicsEngine->setPause(!isOnPaused);
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("  Reset  ")) {
+            physicsEngine->reset();
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::End();
+    }
+
+    bool FluidSimulator::closeWindow() {
+        // Destroying all SDL-OpenGL-ImGUI stuff
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+
+        SDL_GL_DeleteContext(OGLContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+
+        return true;
+    }
 }
 
 int main() {

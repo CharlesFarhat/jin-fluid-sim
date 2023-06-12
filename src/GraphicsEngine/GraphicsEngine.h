@@ -46,6 +46,8 @@ namespace Render {
 
         [[nodiscard]] inline bool isCameraAutoRotating() const { return camera && camera->isAutoRotating(); }
 
+        void checkMouseEvents(UserAction action, Math::float2 mouseDisplacement);
+
         //Setters
         inline void autoRotateCamera(bool autoRotate) {
             if (camera)
@@ -62,10 +64,10 @@ namespace Render {
                 camera->setSceneAspectRatio((float) windowSize.x / windowSize.y);
         }
 
-        inline GLuint getPointCloudCoordVBO() const { return pointCloudCoordVBO; }
-        inline GLuint getPointCloudColorVBO() const { return pointCloudColorVBO; }
-        inline GLuint getCameraCoordVBO() const { return cameraVBO; }
-        inline GLuint getGridDetectorVBO() const { return gridDetectorVBO; }
+        [[nodiscard]] inline GLuint getPointCloudCoordVBO() const { return pointCloudCoordVBO; }
+        [[nodiscard]] inline GLuint getPointCloudColorVBO() const { return pointCloudColorVBO; }
+        [[nodiscard]] inline GLuint getCameraCoordVBO() const { return cameraVBO; }
+        [[nodiscard]] inline GLuint getGridDetectorVBO() const { return gridDetectorVBO; }
 
     private:
         // Graphical Pipeline : build shaders --> compute on GPU
