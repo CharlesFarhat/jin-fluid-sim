@@ -36,6 +36,11 @@ namespace Application {
             return;
         }
 
+        if (!initPhysicsWidget()) {
+            LOG_ERROR("Physic Control system not initialized");
+            return;
+        }
+
         LOG_INFO("System initialize !");
         init = true;
 
@@ -153,6 +158,15 @@ namespace Application {
 
         if (!physicsEngine) {
             LOG_ERROR("Physic engine not runnig !");
+            return false;
+        }
+        return true;
+    }
+
+    bool FluidSimulator::initPhysicsWidget() {
+        physicsControls = std::make_unique<UI::PhysicsControls>(physicsEngine.get());
+
+        if (physicsControls == nullptr) {
             return false;
         }
         return true;

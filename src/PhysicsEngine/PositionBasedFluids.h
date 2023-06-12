@@ -1,6 +1,7 @@
 //
 // Created by charl on 6/12/2023.
 //
+#pragma once
 #include "BasePhysicModel.h"
 #include "utils/RadixSort.hpp"
 

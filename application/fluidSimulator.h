@@ -19,6 +19,7 @@
 #include "GraphicsControls.h"
 #include "BasePhysicModel.h"
 #include "PositionBasedFluids.h"
+#include "PhysicsControls.h"
 
 namespace Application {
 
@@ -61,6 +62,7 @@ namespace Application {
 
         // Widget related varibales
         std::unique_ptr<UI::GraphicsControls> graphicsControls;
+        std::unique_ptr<UI::PhysicsControls> physicsControls;
 
         // Physics related variables
         std::unique_ptr<Physics::BasePhysicModel> physicsEngine;
