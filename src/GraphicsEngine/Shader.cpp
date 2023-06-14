@@ -74,7 +74,8 @@ const std::string Render::Shader::readFromFile(const char *pathToFile) {
 
     if (!fileStream.is_open()) {
         std::string path(pathToFile);
-        LOG_ERROR("Could not load shader from : " + path + " file does not exist (you may need to copy files to a folder called GLSL, next to the executable)");
+        LOG_ERROR("Could not load shader from : " + path +
+                  " file does not exist (you may need to copy files to a folder called GLSL, next to the executable)");
         return "";
     }
 
@@ -86,4 +87,32 @@ const std::string Render::Shader::readFromFile(const char *pathToFile) {
 
     fileStream.close();
     return content;
+}
+
+void Render::Shader::activate() const {
+    glUseProgram(programID);
+}
+
+void Render::Shader::desactivate() {
+    glUseProgram(0);
+}
+
+GLint Render::Shader::getUniformLocation(const std::string &name) const {
+    return glGetUniformLocation(programID, name.c_str());
+}
+
+void Render::Shader::setUniform(const std::string &name, int value) const {
+    glUniform1i(getUniformLocation(name), value);
+}
+
+void Render::Shader::setUniform(const std::string &name, float value) const {
+    glUniform1f(getUniformLocation(name), value);
+}
+
+void Render::Shader::setUniform(const std::string &name, const Math::float4x4 &mat) const {
+    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat[0][0]);
+}
+
+void Render::Shader::setUniform(const std::string &name, const Math::float3 &vec) const {
+    glUniform3f(getUniformLocation(name), vec[0], vec[1], vec[2]);
 }

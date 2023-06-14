@@ -35,6 +35,8 @@ namespace Render {
 
         ~GraphicsEngine();
 
+        void draw();
+
         // Getter
         [[nodiscard]] inline Math::float3 cameraPos() const {
             return camera ? camera->cameraPos() : Math::float3(0.0f, 0.0f, 0.0f);
@@ -64,10 +66,25 @@ namespace Render {
                 camera->setSceneAspectRatio((float) windowSize.x / windowSize.y);
         }
 
+        // getters
         [[nodiscard]] inline GLuint getPointCloudCoordVBO() const { return pointCloudCoordVBO; }
+
         [[nodiscard]] inline GLuint getPointCloudColorVBO() const { return pointCloudColorVBO; }
+
         [[nodiscard]] inline GLuint getCameraCoordVBO() const { return cameraVBO; }
+
         [[nodiscard]] inline GLuint getGridDetectorVBO() const { return gridDetectorVBO; }
+
+        [[nodiscard]] inline bool getIsBoxVisible() const { return isBoxVisible; }
+
+        // Setters
+        inline void setNbParticles(int nbParticles) { this->nbParticules = nbParticles; }
+
+        inline void setTargetVisibility(bool isVisible) { isTargetVisible = isVisible; }
+
+        inline void setTargetPos(const Math::float3 &pos) { targetPos = pos; };
+
+        inline void setBoxVisible(bool isVisible) { isBoxVisible = isVisible; }
 
     private:
         // Graphical Pipeline : build shaders --> compute on GPU
@@ -85,6 +102,9 @@ namespace Render {
         void initGrid();
 
         void initTarget();
+
+        // Rendering functions
+        void drawBox() const;
 
 
         // Simulation params
@@ -106,8 +126,8 @@ namespace Render {
         const GLuint pointCloudColAttribIndex{1};
         const GLuint boxPosAttribIndex{2};
         const GLuint targetPosAttribIndex{5};
-        const GLuint gridPosAttribIndex { 3 };
-        const GLuint gridDetectorAttribIndex { 4 };
+        const GLuint gridPosAttribIndex{3};
+        const GLuint gridDetectorAttribIndex{4};
 
         // Shader for pointCloud, box and grid
         std::unique_ptr<Shader> pointCloudShader;

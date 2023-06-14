@@ -72,6 +72,7 @@ void Render::GraphicsEngine::loadCameraPosition() {
     if (!camera)
         return;
 
+    // if auto rotate, update camera position
     if (camera->isAutoRotating()) {
         const auto angle = Math::float2(0.5f, 0.0f) * Math::PI_F / 180.0f * 0.5f;
         camera->rotate(angle.y, angle.x);
@@ -221,4 +222,35 @@ void Render::GraphicsEngine::checkMouseEvents(Render::UserAction action, Math::f
             break;
         }
     }
+}
+
+/*********************************************************************/
+/*********************************************************************/
+//                                                                   //
+//                      MAIN RUN FUNCTION                            //
+//                                                                   //
+/*********************************************************************/
+/*********************************************************************/
+
+void Render::GraphicsEngine::draw() {
+    loadCameraPosition();
+
+    if (isBoxVisible) {
+        drawBox();
+    }
+
+    glFlush();
+    glFinish();
+}
+
+void Render::GraphicsEngine::drawBox() const {
+    boxShader->activate();
+
+    boxShader->setUniform("u_projView", camera->getProjViewMat());
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, boxEBO);
+    glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    Render::Shader::desactivate();
 }

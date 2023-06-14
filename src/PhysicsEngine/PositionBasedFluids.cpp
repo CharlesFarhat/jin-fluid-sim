@@ -76,19 +76,19 @@ namespace Physics {
 
     bool PositionBasedFluids::isArtPressureEnabled() const { return init && (bool) kernelInputs->isArtPressureEnabled; }
 
-    void PositionBasedFluids::enableArtPressure(bool enable)
-    {
-        if(!init) return;
-        kernelInputs->isArtPressureEnabled = (cl_uint)enable;
+    void PositionBasedFluids::enableArtPressure(bool enable) {
+        if (!init) return;
+        kernelInputs->isArtPressureEnabled = (cl_uint) enable;
         updatePramsInKernel();
     }
 
-    bool PositionBasedFluids::isVorticityConfinementEnabled() const { return init ? (bool)kernelInputs->isVorticityConfEnabled : 0.0f; }
+    bool PositionBasedFluids::isVorticityConfinementEnabled() const {
+        return init ? (bool) kernelInputs->isVorticityConfEnabled : 0.0f;
+    }
 
-    void PositionBasedFluids::enableVorticityConfinement(bool enable)
-    {
-        if(!init) return;
-        kernelInputs->isVorticityConfEnabled = (cl_uint)enable;
+    void PositionBasedFluids::enableVorticityConfinement(bool enable) {
+        if (!init) return;
+        kernelInputs->isVorticityConfEnabled = (cl_uint) enable;
         updatePramsInKernel();
     }
     /*********************************************************************/
@@ -243,10 +243,10 @@ namespace Physics {
 
         initSceneParticules();
 
-        clContext.acquireGLBuffers({ "p_pos", "c_partDetector" });
+        clContext.acquireGLBuffers({"p_pos", "c_partDetector"});
         clContext.runKernel(KERNEL_RESET_PART_DETECTOR, nbCells);
         clContext.runKernel(KERNEL_FILL_PART_DETECTOR, currNbParticles);
-        clContext.releaseGLBuffers({ "p_pos", "c_partDetector" });
+        clContext.releaseGLBuffers({"p_pos", "c_partDetector"});
 
         clContext.runKernel(KERNEL_RESET_CELL_ID, maxNbParticles);
         clContext.runKernel(KERNEL_RESET_CAMERA_DIST, maxNbParticles);
@@ -339,20 +339,22 @@ namespace Physics {
 
 
         float inf = std::numeric_limits<float>::infinity();
-        std::vector<std::array<float, 4>> pos(maxNbParticles, std::array<float, 4>({ inf, inf, inf, 0.0f }));
+        std::vector<std::array<float, 4>> pos(maxNbParticles, std::array<float, 4>({inf, inf, inf, 0.0f}));
 
         std::transform(gridVerts.cbegin(), gridVerts.cend(), pos.begin(),
-                       [](const Math::float3& vertPos) -> std::array<float, 4> { return { vertPos.x, vertPos.y, vertPos.z, 0.0f }; });
+                       [](const Math::float3 &vertPos) -> std::array<float, 4> {
+                           return {vertPos.x, vertPos.y, vertPos.z, 0.0f};
+                       });
 
         clContext.loadBufferFromHost("p_pos", 0, 4 * sizeof(float) * pos.size(), pos.data());
 
-        std::vector<std::array<float, 4>> vel(maxNbParticles, std::array<float, 4>({ 0.0f, 0.0f, 0.0f, 0.0f }));
+        std::vector<std::array<float, 4>> vel(maxNbParticles, std::array<float, 4>({0.0f, 0.0f, 0.0f, 0.0f}));
         clContext.loadBufferFromHost("p_vel", 0, 4 * sizeof(float) * vel.size(), vel.data());
 
-        std::vector<std::array<float, 4>> col(maxNbParticles, std::array<float, 4>({ 0.0f, 0.1f, 1.0f, 0.0f }));
+        std::vector<std::array<float, 4>> col(maxNbParticles, std::array<float, 4>({0.0f, 0.1f, 1.0f, 0.0f}));
         clContext.loadBufferFromHost("p_col", 0, 4 * sizeof(float) * col.size(), col.data());
 
-        clContext.releaseGLBuffers({ "p_pos", "p_col" });
+        clContext.releaseGLBuffers({"p_pos", "p_col"});
     }
 
     /*********************************************************************/
@@ -370,13 +372,68 @@ namespace Physics {
             return;
         }
 
-        CL::Context& clContext = CL::Context::Get();
+        CL::Context &clContext = CL::Context::Get();
 
         clContext.acquireGLBuffers({"p_pos", "p_col", "c_partDetector", "u_cameraPos"});
         if (!pause) {
             // Predict velocity and position
             clContext.runKernel(KERNEL_PREDICT_POS, currNbParticles);
+
+            // Spacial partitionning
+            clContext.runKernel(KERNEL_FILL_CELL_ID, currNbParticles);
+
+            radixSort.sort("p_cellID", {"p_pos", "p_col", "p_vel", "p_predPos"});
+
+            clContext.runKernel(KERNEL_RESET_START_END_CELL, nbCells);
+            clContext.runKernel(KERNEL_FILL_START_CELL, currNbParticles);
+            clContext.runKernel(KERNEL_FILL_END_CELL, currNbParticles);
+
+            if (simpleMode)
+                clContext.runKernel(KERNEL_ADJUST_END_CELL, nbCells);
+
+            // Correcting positions to fit constraints
+            for (int iter = 0; iter < nbJacobiIters; ++iter) {
+                // Clamping to boundary
+                clContext.runKernel(KERNEL_APPLY_BOUNDARY, currNbParticles);
+                // Computing density using SPH method
+                clContext.runKernel(KERNEL_DENSITY, currNbParticles);
+                // Computing constraint factor Lambda
+                clContext.runKernel(KERNEL_CONSTRAINT_FACTOR, currNbParticles);
+                // Computing position correction
+                clContext.runKernel(KERNEL_CONSTRAINT_CORRECTION, currNbParticles);
+                // Correcting predicted position
+                clContext.runKernel(KERNEL_CORRECT_POS, currNbParticles);
+            }
+
+            // Updating velocity
+            clContext.runKernel(KERNEL_UPDATE_VEL, currNbParticles);
+
+            if (kernelInputs->isVorticityConfEnabled) {
+                // Computing vorticity
+                clContext.runKernel(KERNEL_COMPUTE_VORTICITY, currNbParticles);
+                // Applying vorticity confinement to attenue virtual damping
+                clContext.runKernel(KERNEL_VORTICITY_CONFINEMENT, currNbParticles);
+                // Copying velocity buffer as input for vorticity confinement correction
+                clContext.copyBuffer("p_vel", "p_velInViscosity");
+                // Applying xsph viscosity correction for a more coherent motion
+                clContext.runKernel(KERNEL_XSPH_VISCOSITY, currNbParticles);
+            }
+
+            // Updating pos
+            clContext.runKernel(KERNEL_UPDATE_POS, currNbParticles);
+
+            // Rendering purpose
+            clContext.runKernel(KERNEL_RESET_PART_DETECTOR, nbCells);
+            clContext.runKernel(KERNEL_FILL_PART_DETECTOR, currNbParticles);
+            clContext.runKernel(KERNEL_FILL_COLOR, currNbParticles);
         }
+
+        // Rendering purpose
+        clContext.runKernel(KERNEL_FILL_CAMERA_DIST, currNbParticles);
+
+        radixSort.sort("p_cameraDist", {"p_pos", "p_col", "p_vel", "p_predPos"});
+
+        clContext.releaseGLBuffers({"p_pos", "p_col", "c_partDetector", "u_cameraPos"});
 
     }
 

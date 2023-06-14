@@ -210,6 +210,14 @@ namespace Application {
             // Make the simulation happen
             physicsEngine->update();
 
+            graphicsEngine->setNbParticles((int)physicsEngine->nbParticles());
+            graphicsEngine->setTargetVisibility(physicsEngine->isTargetVisible());
+            graphicsEngine->setTargetPos(physicsEngine->targetPos());
+
+            // Draw all on screen
+            graphicsEngine->draw();
+
+
 
             ImGui::Render();
 

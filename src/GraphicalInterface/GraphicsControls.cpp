@@ -32,6 +32,12 @@ void UI::GraphicsControls::display() {
     {
         graphicsEngine1->resetCamera();
     }
+
+    bool drawBox = graphicsEngine1->getIsBoxVisible();
+    if (ImGui::Checkbox("Draw Box", &drawBox)) {
+        graphicsEngine1->setBoxVisible(drawBox);
+    }
+
     ImGui::End();
 }
 
