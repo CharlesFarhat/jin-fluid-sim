@@ -18,7 +18,7 @@ void UI::GraphicsControls::display() {
     ImGui::SetNextWindowPos(ImVec2(15, 192), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Graphics Engine Controls", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::PushItemWidth(150);
+    ImGui::PushItemWidth(250);
 
     ImGui::Spacing();
 
@@ -36,6 +36,11 @@ void UI::GraphicsControls::display() {
     bool drawBox = graphicsEngine1->getIsBoxVisible();
     if (ImGui::Checkbox("Draw Box", &drawBox)) {
         graphicsEngine1->setBoxVisible(drawBox);
+    }
+
+    bool drawGrid = graphicsEngine1->getIsGridVisible();
+    if (ImGui::Checkbox("Draw Grid", &drawGrid)) {
+        graphicsEngine1->setGridVisible(drawGrid);
     }
 
     ImGui::End();

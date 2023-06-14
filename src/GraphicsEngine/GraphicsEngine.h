@@ -77,6 +77,8 @@ namespace Render {
 
         [[nodiscard]] inline bool getIsBoxVisible() const { return isBoxVisible; }
 
+        [[nodiscard]] inline bool getIsGridVisible() const { return isGridVisible; }
+
         // Setters
         inline void setNbParticles(int nbParticles) { this->nbParticules = nbParticles; }
 
@@ -85,6 +87,8 @@ namespace Render {
         inline void setTargetPos(const Math::float3 &pos) { targetPos = pos; };
 
         inline void setBoxVisible(bool isVisible) { isBoxVisible = isVisible; }
+
+        inline void setGridVisible(bool isVisible) { isGridVisible = isVisible; }
 
     private:
         // Graphical Pipeline : build shaders --> compute on GPU
@@ -106,6 +110,10 @@ namespace Render {
         // Rendering functions
         void drawBox() const;
 
+        void drawGrid() const;
+
+        void drawPointCloud() const;
+
 
         // Simulation params
         size_t nbMaxParticules;
@@ -116,6 +124,7 @@ namespace Render {
 
         // Viz params
         bool isBoxVisible;
+        bool isGridVisible;
         bool isTargetVisible;
 
         Math::float3 targetPos;

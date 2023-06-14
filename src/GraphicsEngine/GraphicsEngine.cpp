@@ -16,6 +16,7 @@ Render::GraphicsEngine::GraphicsEngine(Render::EngineParams params) : nbMaxParti
                                                                       nbParticules(params.currNbParticles),
                                                                       pointSize(params.pointSize),
                                                                       isBoxVisible(true),
+                                                                      isGridVisible(false),
                                                                       targetPos({0.0f, 0.0f, 0.0f}) {
     // We start by init all GL system, please see here (not my code) : https://learnopengl.com/Advanced-OpenGL/Depth-testing
     glEnable(GL_DEPTH_TEST);
@@ -227,7 +228,7 @@ void Render::GraphicsEngine::checkMouseEvents(Render::UserAction action, Math::f
 /*********************************************************************/
 /*********************************************************************/
 //                                                                   //
-//                      MAIN RUN FUNCTION                            //
+//                      MAIN DRAW FUNCTION                           //
 //                                                                   //
 /*********************************************************************/
 /*********************************************************************/
@@ -235,9 +236,17 @@ void Render::GraphicsEngine::checkMouseEvents(Render::UserAction action, Math::f
 void Render::GraphicsEngine::draw() {
     loadCameraPosition();
 
+    // Render the box
     if (isBoxVisible) {
         drawBox();
     }
+
+    // Render the grid
+    if (isGridVisible) {
+        drawGrid();
+    }
+
+    drawPointCloud();
 
     glFlush();
     glFinish();
@@ -251,6 +260,31 @@ void Render::GraphicsEngine::drawBox() const {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, boxEBO);
     glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    Render::Shader::desactivate();
+}
+
+void Render::GraphicsEngine::drawGrid() const {
+    gridShader->activate();
+
+    gridShader->setUniform("u_projView", camera->getProjViewMat());
+
+    GLsizei numGridCells = (GLsizei) (gridResolution * gridResolution * gridResolution);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridEBO);
+    glDrawElements(GL_LINES, 24 * numGridCells, GL_UNSIGNED_INT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    Render::Shader::desactivate();
+}
+
+void Render::GraphicsEngine::drawPointCloud() const {
+    pointCloudShader->activate();
+
+    pointCloudShader->setUniform("u_pointSize", (int)pointSize);
+    pointCloudShader->setUniform("u_projView", camera->getProjViewMat());
+    pointCloudShader->setUniform("u_cameraPos", camera->cameraPos());
+
+    glDrawArrays(GL_POINTS, 0, (GLsizei)nbParticules);
 
     Render::Shader::desactivate();
 }
