@@ -2,7 +2,7 @@
 // Position based fluids model based on NVIDIA paper 
 // Macklin and Muller 2013. "Position Based Fluids"
 
-// Preprocessor defines following constant variables in Boids.cpp
+// Preprocessor defines following constant variables in PositionBasedFluids.cpp
 // EFFECT_RADIUS           - radius around a particle where boids laws apply 
 // ABS_WALL_POS            - absolute position of the walls in x,y,z
 // GRID_RES                - resolution of the grid

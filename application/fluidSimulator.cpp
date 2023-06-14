@@ -197,6 +197,8 @@ namespace Application {
             displayMainWidget();
 
             // Draw here all widgets
+            graphicsControls->display();
+            physicsControls->display();
 
 
             ImGuiIO &io = ImGui::GetIO();
@@ -204,6 +206,9 @@ namespace Application {
 
             glClearColor(backGroundColor.x, backGroundColor.y, backGroundColor.z, backGroundColor.w);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // Make the simulation happen
+            physicsEngine->update();
 
 
             ImGui::Render();
@@ -214,7 +219,6 @@ namespace Application {
         }
 
         closeWindow();
-
     }
 
     bool FluidSimulator::checkAppStatus() {
@@ -242,6 +246,7 @@ namespace Application {
                         Math::int2 currentMousePos;
                         SDL_GetMouseState(&currentMousePos.x, &currentMousePos.y);
                         mousePrevPos = currentMousePos;
+
                     }
                     break;
                 case SDL_MOUSEWHEEL:

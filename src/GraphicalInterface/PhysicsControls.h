@@ -4,7 +4,9 @@
 #pragma once
 
 #include <memory>
+#include <imgui.h>
 
+#include "Logger.h"
 #include "PositionBasedFluids.h"
 #include "BasePhysicModel.h"
 

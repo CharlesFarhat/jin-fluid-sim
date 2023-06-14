@@ -66,6 +66,38 @@ namespace Physics {
         cl_float xsphViscosityCoeff = 0.0001f;
     };
 
+    /*********************************************************************/
+    /*********************************************************************/
+    //                                                                   //
+    //                      GETTERS AND SETTERS                          //
+    //                                                                   //
+    /*********************************************************************/
+    /*********************************************************************/
+
+    bool PositionBasedFluids::isArtPressureEnabled() const { return init && (bool) kernelInputs->isArtPressureEnabled; }
+
+    void PositionBasedFluids::enableArtPressure(bool enable)
+    {
+        if(!init) return;
+        kernelInputs->isArtPressureEnabled = (cl_uint)enable;
+        updatePramsInKernel();
+    }
+
+    bool PositionBasedFluids::isVorticityConfinementEnabled() const { return init ? (bool)kernelInputs->isVorticityConfEnabled : 0.0f; }
+
+    void PositionBasedFluids::enableVorticityConfinement(bool enable)
+    {
+        if(!init) return;
+        kernelInputs->isVorticityConfEnabled = (cl_uint)enable;
+        updatePramsInKernel();
+    }
+    /*********************************************************************/
+    /*********************************************************************/
+    //                                                                   //
+    //                      Internals working sys                        //
+    //                                                                   //
+    /*********************************************************************/
+    /*********************************************************************/
 
     PositionBasedFluids::PositionBasedFluids(ModelParams params) : BasePhysicModel(params), simpleMode(true),
                                                                    maxNbPartsInCell(100),
@@ -323,7 +355,28 @@ namespace Physics {
         clContext.releaseGLBuffers({ "p_pos", "p_col" });
     }
 
+    /*********************************************************************/
+    /*********************************************************************/
+    //                                                                   //
+    //                      MAIN RUN FUNCTION                            //
+    //                                                                   //
+    /*********************************************************************/
+    /*********************************************************************/
+
     void PositionBasedFluids::update() {
+
+        if (!init) {
+            LOG_ERROR("Physic system is not initiated");
+            return;
+        }
+
+        CL::Context& clContext = CL::Context::Get();
+
+        clContext.acquireGLBuffers({"p_pos", "p_col", "c_partDetector", "u_cameraPos"});
+        if (!pause) {
+            // Predict velocity and position
+            clContext.runKernel(KERNEL_PREDICT_POS, currNbParticles);
+        }
 
     }
 

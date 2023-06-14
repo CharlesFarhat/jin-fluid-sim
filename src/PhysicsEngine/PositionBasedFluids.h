@@ -2,6 +2,7 @@
 // Created by charl on 6/12/2023.
 //
 #pragma once
+
 #include "BasePhysicModel.h"
 #include "utils/RadixSort.hpp"
 
@@ -47,13 +48,27 @@ namespace Physics {
 
         const Scenes getInitialScene() const { return initalScene; }
 
+        // All getter and setters for fluids params
+
+        void setNbJacobiIters(size_t nbIters) {
+            if (!init) return;
+            nbJacobiIters = nbIters;
+        }
+
+        [[nodiscard]] size_t getNbJacobiIters() const { return init ? nbJacobiIters : 0; }
+        void enableArtPressure(bool enable);
+        [[nodiscard]] bool isArtPressureEnabled() const;
+        void enableVorticityConfinement(bool enable);
+        [[nodiscard]] bool isVorticityConfinementEnabled() const;
+
+
 
     private:
         bool createOpenCLProgram() const;
 
         bool createOpenCLBuffers() const;
 
-        static bool createOpenCLKernels() ;
+        static bool createOpenCLKernels();
 
         void updatePramsInKernel();
 
