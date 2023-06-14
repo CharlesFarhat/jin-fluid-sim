@@ -2,6 +2,7 @@
 // Created by charl on 6/11/2023.
 //
 #pragma once
+
 #include <string>
 #include <map>
 
@@ -55,34 +56,36 @@ namespace Physics {
         virtual ~BasePhysicModel();
 
         virtual void update() = 0;
+
         virtual void reset() = 0;
 
         // Setters and getters
         [[nodiscard]] size_t getMaxNbParticles() const { return maxNbParticles; }
 
         void setNbParticles(size_t nbSelParticles) { currNbParticles = nbSelParticles; }
+
         [[nodiscard]] size_t nbParticles() const { return currNbParticles; }
 
-        void setBoundary(Boundary boundary)
-        {
+        void setBoundary(Boundary boundary) {
             boundary = boundary;
         }
+
         [[nodiscard]] Boundary getBoundary() const { return boundary; }
 
         [[nodiscard]] bool isInit() const { return init; }
 
         void setPause(bool pause) { pause = pause; }
+
         [[nodiscard]] bool isPause() const { return pause; }
 
         virtual void setVelocity(float velocity) { velocity = velocity; }
+
         [[nodiscard]] float getVelocity() const { return velocity; }
 
-        virtual Math::float3 targetPos() const { return { 0.0f, 0.0f, 0.0f }; }
-        virtual bool isTargetActivated() const { return false; }
-        virtual bool isTargetVisible() const { return false; }
-
         [[nodiscard]] bool isProfilingEnabled() const;
+
         void enableProfiling(bool enable);
+
         bool isUsingIGPU() const;
 
     protected:

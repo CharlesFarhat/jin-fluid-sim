@@ -82,10 +82,6 @@ namespace Render {
         // Setters
         inline void setNbParticles(int nbParticles) { this->nbParticules = nbParticles; }
 
-        inline void setTargetVisibility(bool isVisible) { isTargetVisible = isVisible; }
-
-        inline void setTargetPos(const Math::float3 &pos) { targetPos = pos; };
-
         inline void setBoxVisible(bool isVisible) { isBoxVisible = isVisible; }
 
         inline void setGridVisible(bool isVisible) { isGridVisible = isVisible; }
@@ -105,8 +101,6 @@ namespace Render {
 
         void initGrid();
 
-        void initTarget();
-
         // Rendering functions
         void drawBox() const;
 
@@ -125,16 +119,12 @@ namespace Render {
         // Viz params
         bool isBoxVisible;
         bool isGridVisible;
-        bool isTargetVisible;
-
-        Math::float3 targetPos;
 
         // Graphical Object
         std::unique_ptr<Camera> camera;
         const GLuint pointCloudPosAttribIndex{0};
         const GLuint pointCloudColAttribIndex{1};
         const GLuint boxPosAttribIndex{2};
-        const GLuint targetPosAttribIndex{5};
         const GLuint gridPosAttribIndex{3};
         const GLuint gridDetectorAttribIndex{4};
 
@@ -142,7 +132,6 @@ namespace Render {
         std::unique_ptr<Shader> pointCloudShader;
         std::unique_ptr<Shader> boxShader;
         std::unique_ptr<Shader> gridShader;
-        std::unique_ptr<Shader> targetShader;
 
         // OpenGl backend related:
         GLuint VAO;
@@ -151,8 +140,7 @@ namespace Render {
         GLuint cameraVBO;
         GLuint pointCloudCoordVBO;
         GLuint pointCloudColorVBO;
-        GLuint targetVBO;
-        GLuint gridDetectorVBO; // ATTENTION : not implemented because of no grid init !
+        GLuint gridDetectorVBO;
         GLuint gridEBO;
         GLuint gridPosVBO;
 

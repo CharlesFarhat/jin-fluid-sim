@@ -16,8 +16,7 @@ Render::GraphicsEngine::GraphicsEngine(Render::EngineParams params) : nbMaxParti
                                                                       nbParticules(params.currNbParticles),
                                                                       pointSize(params.pointSize),
                                                                       isBoxVisible(true),
-                                                                      isGridVisible(false),
-                                                                      targetPos({0.0f, 0.0f, 0.0f}) {
+                                                                      isGridVisible(false) {
     // We start by init all GL system, please see here (not my code) : https://learnopengl.com/Advanced-OpenGL/Depth-testing
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -40,8 +39,6 @@ Render::GraphicsEngine::GraphicsEngine(Render::EngineParams params) : nbMaxParti
     initBox();
 
     initGrid();
-
-    initTarget();
 }
 
 Render::GraphicsEngine::~GraphicsEngine() {
@@ -49,14 +46,12 @@ Render::GraphicsEngine::~GraphicsEngine() {
     glDeleteBuffers(1, &pointCloudColorVBO);
     glDeleteBuffers(1, &boxVBO);
     glDeleteBuffers(1, &cameraVBO);
-    glDeleteBuffers(1, &targetVBO);
 }
 
 void Render::GraphicsEngine::buildShaders() {
     pointCloudShader = std::make_unique<Shader>("./GLSL/PointCloudVertShader.glsl", "./GLSL/PointCloudFragShader.glsl");
     boxShader = std::make_unique<Shader>("./GLSL/BoxVertShader.glsl", "./GLSL/FragShader.glsl");
     gridShader = std::make_unique<Shader>("./GLSL/GridVertShader.glsl", "./GLSL/FragShader.glsl");
-    targetShader = std::make_unique<Shader>("./GLSL/TargetVertShader.glsl", "./GLSL/FragShader.glsl");
 }
 
 void Render::GraphicsEngine::initCamera(float sceneAspectRation) {
@@ -123,16 +118,6 @@ void Render::GraphicsEngine::initPointCloud() {
     glBufferData(GL_ARRAY_BUFFER, 4 * nbMaxParticules * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(pointCloudColAttribIndex, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glEnableVertexAttribArray(pointCloudColAttribIndex);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-void Render::GraphicsEngine::initTarget() {
-    const std::array<float, 3> targetCoord = {targetPos[0], targetPos[1], targetPos[2]};
-    glGenBuffers(1, &targetVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, targetVBO);
-    glVertexAttribPointer(targetPosAttribIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(targetPosAttribIndex);
-    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(float), &targetCoord, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
