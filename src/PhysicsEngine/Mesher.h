@@ -7,13 +7,18 @@
 
 namespace Physics {
     class Mesher {
-        Mesher(size_t TSDFGridRes);
+    public:
+        Mesher(size_t TSDFGridRes, size_t nbPoints);
+
         ~Mesher() = default;
 
-        std::string addOpenCLBuildOptions();
-
     private:
+        bool createOpenCLProgram() const;
+
+        bool createBuffers() const;
+
         size_t nbTSDFGridCells;
         size_t TSDFGridRes;
+        size_t nbPoints;
     };
 }

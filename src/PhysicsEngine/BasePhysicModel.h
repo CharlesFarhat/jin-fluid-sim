@@ -35,6 +35,7 @@ namespace Physics {
         size_t maxNbParticles = 0;
         size_t boxSize = 0;
         size_t gridRes = 0;
+        size_t TSDFGridRes = 0;
         float velocity = 0.0f;
         unsigned int particlePosVBO = 0;
         unsigned int particleColVBO = 0;

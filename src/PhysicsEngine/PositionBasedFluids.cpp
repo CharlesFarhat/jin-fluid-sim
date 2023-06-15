@@ -107,6 +107,7 @@ namespace Physics {
                                                                    kernelInputs(std::make_unique<FluidKernelInputs>()) {
         if (useMesher) {
             // If it use mesher, need to init mesher system
+            mesher = std::make_unique<Mesher>(params.TSDFGridRes, params.maxNbParticles);
         }
 
 
@@ -147,13 +148,8 @@ namespace Physics {
 
         LOG_INFO(openCLBuildOption.str());
         CL::Context &clContext = CL::Context::Get();
-        if (!useMesher) {
-            clContext.createProgram(PROGRAM_POSITION_BASED_FLUID,
-                                    std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl"}),
-                                    openCLBuildOption.str());
-        }
         clContext.createProgram(PROGRAM_POSITION_BASED_FLUID,
-                                std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl", "mesher.cl"}),
+                                std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl"}),
                                 openCLBuildOption.str());
         return true;
     }
@@ -389,11 +385,13 @@ namespace Physics {
             // Predict velocity and position
             clContext.runKernel(KERNEL_PREDICT_POS, currNbParticles);
 
-            // Spacial partitionning
+            // Spacial partitionning, it will create a tab with pCellID[ID] = id of the cell the ID particule is in
             clContext.runKernel(KERNEL_FILL_CELL_ID, currNbParticles);
 
+            // Will sort the particules by cellID
             radixSort.sort("p_cellID", {"p_pos", "p_col", "p_vel", "p_predPos"});
 
+            // Will create an array with for each cell the index of the first and last particule in the cell
             clContext.runKernel(KERNEL_RESET_START_END_CELL, nbCells);
             clContext.runKernel(KERNEL_FILL_START_CELL, currNbParticles);
             clContext.runKernel(KERNEL_FILL_END_CELL, currNbParticles);

@@ -5,6 +5,7 @@
 
 #include "BasePhysicModel.h"
 #include "utils/RadixSort.hpp"
+#include "Mesher.h"
 
 
 #include <array>
@@ -82,5 +83,6 @@ namespace Physics {
         // Utils
         RadixSort radixSort;
         std::unique_ptr<FluidKernelInputs> kernelInputs;
+        std::unique_ptr<Mesher> mesher;
     };
 }

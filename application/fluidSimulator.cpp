@@ -130,6 +130,7 @@ namespace Application {
         params.maxNbParticles = Utils::ALL_NB_PARTICLES.crbegin()->first;
         params.boxSize = Utils::BOX_SIZE;
         params.gridRes = Utils::GRID_RES;
+        params.TSDFGridRes = params.gridRes / 20;
         params.velocity = 1.0f;
         params.particlePosVBO = (unsigned int) graphicsEngine->getPointCloudCoordVBO();
         params.particleColVBO = (unsigned int) graphicsEngine->getPointCloudColorVBO();
