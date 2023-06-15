@@ -105,6 +105,12 @@ namespace Physics {
                                                                    initalScene(Scenes::Drop),
                                                                    radixSort(params.maxNbParticles),
                                                                    kernelInputs(std::make_unique<FluidKernelInputs>()) {
+        if (useMesher) {
+            // If it use mesher, need to init mesher system
+        }
+
+
+
         // Create the OpenCL simulation program
         createOpenCLProgram();
 
@@ -123,8 +129,7 @@ namespace Physics {
 
 
     bool PositionBasedFluids::createOpenCLProgram() const {
-        // Find a GPu and create an openCL contect on it
-        CL::Context &clContext = CL::Context::Get();
+
 
         float effectRadius = ((float) boxSize) / gridRes;
 
@@ -141,12 +146,15 @@ namespace Physics {
         openCLBuildOption << " -DMAX_VEL=" << Utils::FloatToStr(30.0f);
 
         LOG_INFO(openCLBuildOption.str());
+        CL::Context &clContext = CL::Context::Get();
+        if (!useMesher) {
+            clContext.createProgram(PROGRAM_POSITION_BASED_FLUID,
+                                    std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl"}),
+                                    openCLBuildOption.str());
+        }
         clContext.createProgram(PROGRAM_POSITION_BASED_FLUID,
-                                std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl"}),
+                                std::vector<std::string>({"fluids.cl", "utils.cl", "grid.cl", "mesher.cl"}),
                                 openCLBuildOption.str());
-
-        LOG_INFO("OpenCL program sucessfully created !");
-
         return true;
     }
 
@@ -154,12 +162,12 @@ namespace Physics {
         LOG_INFO("Creating OpenCL Buffers");
         CL::Context &clContext = CL::Context::Get();
 
-        // We are using openGL buffers to create OpenCL Workflow OpenGL buffers <--> OpenCL buffers
+        // We are using openGL buffers to create OpenCL buffers <--> Same data on GPU
         clContext.createGLBuffer("u_cameraPos", cameraVBO, CL_MEM_READ_ONLY);
         clContext.createGLBuffer("p_pos", particlePosVBO, CL_MEM_READ_WRITE);
         clContext.createGLBuffer("p_col", particleColVBO, CL_MEM_READ_WRITE);
 
-        clContext.createGLBuffer("c_partDetector", gridVBO, CL_MEM_READ_WRITE); // TODO: This call abort ...
+        clContext.createGLBuffer("c_partDetector", gridVBO, CL_MEM_READ_WRITE);
 
 
         clContext.createBuffer("p_density", maxNbParticles * sizeof(float), CL_MEM_READ_WRITE);
@@ -172,6 +180,8 @@ namespace Physics {
         clContext.createBuffer("p_cellID", maxNbParticles * sizeof(unsigned int), CL_MEM_READ_WRITE);
         clContext.createBuffer("p_cameraDist", maxNbParticles * sizeof(unsigned int), CL_MEM_READ_WRITE);
 
+        // Hold start and end ID of particule in a cell of the grid, sorted by radix and use later for NN search
+        // Also used in TSDF to create mesh
         clContext.createBuffer("c_startEndPartID", 2 * nbCells * sizeof(unsigned int), CL_MEM_READ_WRITE);
 
         LOG_INFO("OpenCL Buffers have been created properly");

@@ -91,6 +91,7 @@ namespace Physics {
     protected:
         bool init;
         bool pause;
+        bool useMesher;
 
         size_t maxNbParticles;
         size_t currNbParticles;

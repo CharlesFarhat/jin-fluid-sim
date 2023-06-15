@@ -18,7 +18,8 @@ namespace Utils {
         P4K = 1 << 12,
         P32K = 1 << 15,
         P65K = 1 << 16,
-        P130K = 1 << 17
+        P130K = 1 << 17,
+        P1048k = 1 << 22
     };
     struct NbParticlesInfo {
         const std::string name;
@@ -39,14 +40,15 @@ namespace Utils {
             {NbParticles::P4K,   {"4k",   {16, 16, 16}}},
             {NbParticles::P32K,  {"32k",  {32, 32, 32}}},
             {NbParticles::P65K,  {"65k",  {64, 32, 32}}},
-            {NbParticles::P130K, {"130k", {64, 64, 32}}}
+            {NbParticles::P130K, {"130k", {64, 64, 32}}},
+            {NbParticles::P1048k, {"1048k", {64, 64, 32}}}
     };
 
 // Length of one side of the bounding box where the particles evolve
     static constexpr int BOX_SIZE = 10;
 
 // Length of one side of the cells forming the 3D grid containing all the particles
-    static constexpr int GRID_RES = 30;
+    static constexpr int GRID_RES = 30; // default = 30
 
     static std::array<int, 3> GetNbParticlesSubdiv3D(NbParticles nbParts)
     {

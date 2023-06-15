@@ -4,9 +4,11 @@
 
 #include "BasePhysicModel.h"
 #include "ocl/Context.hpp"
+#include "Logger.h"
 
 Physics::BasePhysicModel::BasePhysicModel(ModelParams params) : init(false),
                                                                 pause(false),
+                                                                useMesher(true),
                                                                 maxNbParticles(params.maxNbParticles),
                                                                 currNbParticles(params.currNbParticles),
                                                                 boxSize(params.boxSize), gridRes(params.gridRes),
