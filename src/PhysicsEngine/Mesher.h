@@ -11,9 +11,11 @@
 namespace Physics {
     class Mesher {
     public:
-        Mesher(size_t TSDFGridRes, size_t nbPoints, size_t domainSize, size_t maxnbParticules, RadixSort* radixSort1);
+        Mesher(size_t TSDFGridRes, size_t nbPqrticules, size_t domainSize, size_t maxnbParticules, RadixSort* radixSort1);
 
         void reset() const;
+
+        void updateMesher(const std::string& inputPartPos);
 
         ~Mesher() = default;
 

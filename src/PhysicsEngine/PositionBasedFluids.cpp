@@ -108,7 +108,7 @@ namespace Physics {
                                                                    kernelInputs(std::make_unique<FluidKernelInputs>()) {
         if (useMesher) {
             // If it use mesher, need to init mesher system
-            mesher = std::make_unique<Mesher>(params.TSDFGridRes, params.maxNbParticles, params.boxSize,
+            mesher = std::make_unique<Mesher>(params.TSDFGridRes, params.currNbParticles, params.boxSize,
                                               params.maxNbParticles, radixSort.get());
         }
 
@@ -436,6 +436,9 @@ namespace Physics {
             clContext.runKernel(KERNEL_FILL_PART_DETECTOR, currNbParticles);
             clContext.runKernel(KERNEL_FILL_COLOR, currNbParticles);
         }
+
+        // Meshing purpose
+        mesher->updateMesher("p_pos");
 
         // Rendering purpose
         clContext.runKernel(KERNEL_FILL_CAMERA_DIST, currNbParticles);

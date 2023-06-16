@@ -8,7 +8,6 @@
 #include "Logger.h"
 
 
-
 #define PROGRAM_MESHER "mesher"
 
 // OpenCL kernels
@@ -26,7 +25,8 @@
 // Compute TSDF
 #define KERNEL_TSDF_COMPUTE "TSDF_computeGrid"
 
-Physics::Mesher::Mesher(size_t TSDFGridRes, size_t nbPoints, size_t domainSize, size_t maxnbParticules, RadixSort* radixSort1)
+Physics::Mesher::Mesher(size_t TSDFGridRes, size_t nbPqrticules, size_t domainSize, size_t maxnbParticules,
+                        RadixSort *radixSort1)
         : simDomainSize(domainSize),
           init(false),
           nbMaxPartPerCellTSDF(100),
@@ -35,7 +35,7 @@ Physics::Mesher::Mesher(size_t TSDFGridRes, size_t nbPoints, size_t domainSize, 
                   TSDFGridRes * TSDFGridRes *
                   TSDFGridRes),
           TSDFGridRes(TSDFGridRes),
-          nbParticules(nbPoints),
+          nbParticules(nbPqrticules),
           radixSort(radixSort1) {
 
     // create openCl program
@@ -90,17 +90,16 @@ bool Physics::Mesher::createBuffers() const {
 
     LOG_INFO("Creating OpenCL Buffers for TSDF program");
     // Buffer to hold our TSDF voxel grid (an array of signed float, distance to nearest surface)
-    // TODO : check datatype for TSDF grid
     clContext.createBuffer("TSDFGrid", sizeof(float) * nbTSDFGridCells, CL_MEM_READ_WRITE);
     // Buffer to hold a tab with pCellID[ID] = id of the cell in TSDF grid the ID particule is in
-    clContext.createBuffer("TSDF_cellID", sizeof(unsigned int) * nbParticules, CL_MEM_READ_WRITE);
+    clContext.createBuffer("TSDF_cellID", sizeof(unsigned int) * maxNbParticules, CL_MEM_READ_WRITE);
 
     // Hold start and end ID of particule in a cell of the grid, sorted by radix and use later for NN search
     // Also used in TSDF to create mesh
     clContext.createBuffer("TSDF_part_startEndID", 2 * sizeof(unsigned int) * nbTSDFGridCells, CL_MEM_READ_WRITE);
 
     // Buffer to hold all particules positions
-    clContext.createBuffer("TSDF_part_pos_tmp", 4 * sizeof(float) * nbParticules, CL_MEM_READ_WRITE);
+    clContext.createBuffer("TSDF_part_pos_tmp", 4 * sizeof(float) * maxNbParticules, CL_MEM_READ_WRITE);
 
     LOG_INFO("OpenCL Buffers have been created properly");
     return true;
@@ -130,5 +129,36 @@ void Physics::Mesher::reset() const {
 
     CL::Context &clContext = CL::Context::Get();
     clContext.runKernel(KERNEL_TSDF_RESET_CELL_ID, {maxNbParticules});
+}
+
+/*********************************************************************/
+/*********************************************************************/
+//                                                                   //
+//                      MAIN RUN FUNCTION                            //
+//                                                                   //
+/*********************************************************************/
+/*********************************************************************/
+
+void Physics::Mesher::updateMesher(const std::string& inputPartPos) {
+    // Will use particules postions to compute TSDF
+
+    CL::Context &clContext = CL::Context::Get();
+
+    clContext.copyBuffer(inputPartPos, "TSDF_part_pos_tmp");
+
+    // Reset cell ID
+    clContext.runKernel(KERNEL_TSDF_FILL_CELL_ID, {nbParticules});
+
+    // Sort particules by cell ID
+    radixSort->sort("TSDF_cellID", {"TSDF_part_pos_tmp"});
+
+    // Reset start and end ID of particules in a cell
+    clContext.runKernel(KERNEL_TSDF_RESET_START_END_CELL, {nbTSDFGridCells});
+    clContext.runKernel(KERNEL_TSDF_FILL_START_CELL, {nbParticules});
+    clContext.runKernel(KERNEL_TSDF_FILL_END_CELL, {nbParticules});
+
+    clContext.runKernel(KERNEL_TSDF_ADJUST_END_CELL, {nbTSDFGridCells});
+
+    clContext.runKernel(KERNEL_TSDF_COMPUTE, {nbTSDFGridCells});
 }
 
