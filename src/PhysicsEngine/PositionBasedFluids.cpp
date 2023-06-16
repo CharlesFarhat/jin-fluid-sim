@@ -103,14 +103,14 @@ namespace Physics {
                                                                    maxNbPartsInCell(100),
                                                                    nbJacobiIters(2),
                                                                    initalScene(Scenes::Drop),
-                                                                   radixSort(params.maxNbParticles),
+                                                                   radixSort(std::make_unique<RadixSort>(
+                                                                           params.maxNbParticles)),
                                                                    kernelInputs(std::make_unique<FluidKernelInputs>()) {
         if (useMesher) {
             // If it use mesher, need to init mesher system
-            mesher = std::make_unique<Mesher>(params.TSDFGridRes, params.maxNbParticles);
+            mesher = std::make_unique<Mesher>(params.TSDFGridRes, params.maxNbParticles, params.boxSize,
+                                              params.maxNbParticles, radixSort.get());
         }
-
-
 
         // Create the OpenCL simulation program
         createOpenCLProgram();
@@ -256,6 +256,7 @@ namespace Physics {
 
         clContext.runKernel(KERNEL_RESET_CELL_ID, maxNbParticles);
         clContext.runKernel(KERNEL_RESET_CAMERA_DIST, maxNbParticles);
+        mesher->reset();
 
     }
 
@@ -385,11 +386,11 @@ namespace Physics {
             // Predict velocity and position
             clContext.runKernel(KERNEL_PREDICT_POS, currNbParticles);
 
-            // Spacial partitionning, it will create a tab with pCellID[ID] = id of the cell the ID particule is in
+            // Spacial partitioning, it will create a tab with pCellID[ID] = id of the cell the ID particule is in
             clContext.runKernel(KERNEL_FILL_CELL_ID, currNbParticles);
 
             // Will sort the particules by cellID
-            radixSort.sort("p_cellID", {"p_pos", "p_col", "p_vel", "p_predPos"});
+            radixSort->sort("p_cellID", {"p_pos", "p_col", "p_vel", "p_predPos"});
 
             // Will create an array with for each cell the index of the first and last particule in the cell
             clContext.runKernel(KERNEL_RESET_START_END_CELL, nbCells);
@@ -439,7 +440,7 @@ namespace Physics {
         // Rendering purpose
         clContext.runKernel(KERNEL_FILL_CAMERA_DIST, currNbParticles);
 
-        radixSort.sort("p_cameraDist", {"p_pos", "p_col", "p_vel", "p_predPos"});
+        radixSort->sort("p_cameraDist", {"p_pos", "p_col", "p_vel", "p_predPos"});
 
         clContext.releaseGLBuffers({"p_pos", "p_col", "c_partDetector", "u_cameraPos"});
 

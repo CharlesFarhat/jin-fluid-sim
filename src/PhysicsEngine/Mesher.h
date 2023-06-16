@@ -4,11 +4,16 @@
 #pragma once
 
 #include <string>
+#include <memory>
+#include "utils/RadixSort.hpp"
+#include "Utils.h"
 
 namespace Physics {
     class Mesher {
     public:
-        Mesher(size_t TSDFGridRes, size_t nbPoints);
+        Mesher(size_t TSDFGridRes, size_t nbPoints, size_t domainSize, size_t maxnbParticules, RadixSort* radixSort1);
+
+        void reset() const;
 
         ~Mesher() = default;
 
@@ -17,8 +22,18 @@ namespace Physics {
 
         bool createBuffers() const;
 
+        static bool createKernels();
+
+        size_t simDomainSize;
+
+        bool init;
+        size_t nbMaxPartPerCellTSDF;
+        size_t maxNbParticules;
         size_t nbTSDFGridCells;
         size_t TSDFGridRes;
-        size_t nbPoints;
+        size_t nbParticules;
+
+        //Sort system
+        RadixSort* radixSort;
     };
 }

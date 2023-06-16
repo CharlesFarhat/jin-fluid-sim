@@ -81,7 +81,7 @@ namespace Physics {
         size_t nbJacobiIters;
         Scenes initalScene;
         // Utils
-        RadixSort radixSort;
+        std::unique_ptr<RadixSort> radixSort;
         std::unique_ptr<FluidKernelInputs> kernelInputs;
         std::unique_ptr<Mesher> mesher;
     };
