@@ -198,7 +198,7 @@ namespace Physics {
         clContext.createKernel(PROGRAM_POSITION_BASED_FLUID, KERNEL_RESET_CAMERA_DIST, {"p_cameraDist"});
         clContext.createKernel(PROGRAM_POSITION_BASED_FLUID, KERNEL_FILL_CAMERA_DIST,
                                {"p_pos", "u_cameraPos", "p_cameraDist"});
-        clContext.createKernel(PROGRAM_POSITION_BASED_FLUID, KERNEL_FILL_COLOR, {"p_density", "", "p_col"});
+        clContext.createKernel(PROGRAM_POSITION_BASED_FLUID, KERNEL_FILL_COLOR, {"p_vel", "", "p_col"});
 
         // Radix Sort based on 3D grid, using predicted positions, not corrected ones
         clContext.createKernel(PROGRAM_POSITION_BASED_FLUID, KERNEL_RESET_CELL_ID, {"p_cellID"});
@@ -309,13 +309,13 @@ namespace Physics {
                 startFluidPos = {boxSize / -2.0f, boxSize / -2.0f, boxSize / -2.0f};
                 endFluidPos = {boxSize / 2.0f, 0.0f, 0.0f};
                 break;
-            case Scenes::Explosion:
-                currNbParticles = Utils::NbParticles::P65K;
-                shape = Geometry::Shape3D::Sphere;
-                startFluidPos = {boxSize / -6.0f, boxSize / -6.0f, boxSize / -6.0f};
-                endFluidPos = {boxSize / 6.0f, boxSize / 6.0f, boxSize / 6.0f};
-                break;
             case Scenes::Drop:
+                currNbParticles = Utils::NbParticles::P4K;
+                shape = Geometry::Shape3D::Box;
+                startFluidPos = {boxSize / -10.0f, 2.0f * boxSize / 10.0f, boxSize / -10.0f};
+                endFluidPos = {boxSize / 10.0f, 4.0f * boxSize / 10.0f, boxSize / 10.0f};
+                break;
+            case Scenes::DoubleDrop:
                 currNbParticles = Utils::NbParticles::P4K;
                 shape = Geometry::Shape3D::Box;
                 startFluidPos = {boxSize / -10.0f, 2.0f * boxSize / 10.0f, boxSize / -10.0f};
@@ -331,12 +331,24 @@ namespace Physics {
 
         gridVerts = Geometry::Generate3DGrid(shape, grid3DRes, startFluidPos, endFluidPos);
 
-        // Specific case, it adds the sphere to drop
-        if (initalScene == Scenes::Drop) {
-            currNbParticles += Utils::NbParticles::P65K;
+        // Specific case, it adds the bottom fluid grid
+        if (initalScene == Scenes::Drop || initalScene == Scenes::DoubleDrop) {
+            currNbParticles += Utils::NbParticles::P32K;
             Math::int3 grid3DRes = {64, 16, 64};
             startFluidPos = {boxSize / -2.0f, boxSize / -2.0f, boxSize / -2.0f};
             endFluidPos = {boxSize / 2.0f, boxSize / -2.55f, boxSize / 2.0f};
+
+            auto bottomGridVerts = Geometry::Generate3DGrid(Geometry::Shape3D::Box, grid3DRes, startFluidPos,
+                                                            endFluidPos);
+
+            gridVerts.insert(gridVerts.end(), bottomGridVerts.begin(), bottomGridVerts.end());
+        }
+
+        if (initalScene == Scenes::DoubleDrop) {
+            currNbParticles += Utils::NbParticles::P65K;
+            Math::int3 grid3DRes = {32, 32, 32};
+            startFluidPos = {boxSize / -4.0f, 1.0f * boxSize / 15.0f, boxSize / -5.0f};
+            endFluidPos = {boxSize / 4.0f, 4.0f * boxSize / 15.0f, boxSize / 5.0f};
 
             auto bottomGridVerts = Geometry::Generate3DGrid(Geometry::Shape3D::Box, grid3DRes, startFluidPos,
                                                             endFluidPos);
@@ -348,10 +360,9 @@ namespace Physics {
         float inf = std::numeric_limits<float>::infinity();
         std::vector<std::array<float, 4>> pos(maxNbParticles, std::array<float, 4>({inf, inf, inf, 0.0f}));
 
-        std::transform(gridVerts.cbegin(), gridVerts.cend(), pos.begin(),
-                       [](const Math::float3 &vertPos) -> std::array<float, 4> {
-                           return {vertPos.x, vertPos.y, vertPos.z, 0.0f};
-                       });
+        std::ranges::transform(gridVerts, pos.begin(), [](const Math::float3 &vertPos) -> std::array<float, 4> {
+            return {vertPos.x, vertPos.y, vertPos.z, 0.0f};
+        });
 
         clContext.loadBufferFromHost("p_pos", 0, 4 * sizeof(float) * pos.size(), pos.data());
 

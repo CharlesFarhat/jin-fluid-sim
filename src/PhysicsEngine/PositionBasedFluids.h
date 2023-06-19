@@ -19,8 +19,8 @@ namespace Physics {
 
     enum Scenes {
         Bath = 0,
-        Explosion = 1,
-        Drop = 2
+        Drop = 2,
+        DoubleDrop = 3,
     };
 
     struct CompareCaseType {
@@ -31,8 +31,8 @@ namespace Physics {
 
     static const std::map<Scenes, std::string, CompareCaseType> ALL_FLUID_CASES{
             {Scenes::Bath,      "Funny bath"},
-            {Scenes::Explosion, "Explosion"},
             {Scenes::Drop,      "Drop"},
+            {Scenes::DoubleDrop,"Double drop"},
     };
 
     class PositionBasedFluids : public BasePhysicModel {
