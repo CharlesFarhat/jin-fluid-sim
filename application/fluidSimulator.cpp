@@ -10,7 +10,7 @@ constexpr auto GLSL_VERSION = "#version 130";
 
 namespace Application {
 
-    FluidSimulator::FluidSimulator() : windowSize(1920, 1080),
+    FluidSimulator::FluidSimulator() : windowSize(1500, 750),
                                        simType(Physics::SimType::POSITION_BASED_FLUIDS),
                                        appName("Realtime Fluid Simulator"),
                                        init(false),

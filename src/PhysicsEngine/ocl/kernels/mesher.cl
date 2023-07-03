@@ -127,4 +127,18 @@ __kernel void TSDF_computeGrid(
     const __global uint *TSDFCellID, const __global uint2 *TSDFPartStartEndID,
     const __global float4 *TSDFPartPosTmp,
     // output
-    __global float4 *TSDFGrid) {}
+    __global float4 *TSDFGrid) {
+
+  // Particule relative informations
+  const float4 pos = TSDFPartPosTmp[ID];
+  const uint3 cellIndex3D = TSDF_getCell3DIndexFromPos(pos);
+  // uint cellIndex1D =
+  //     (cellIndex3D.x * GRID_RES + cellIndex3D.y) * GRID_RES + cellIndex3D.z;
+
+  // Init TSDF grid
+  // TSDFGrid[cell1DIndex] = (float)(0);
+
+  // Local SDF init
+  float3 sumX = {0, 0, 0};
+  float sumWeight = 0;
+}

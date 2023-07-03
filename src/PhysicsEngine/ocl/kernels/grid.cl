@@ -1,4 +1,3 @@
-// Preprocessor defines following constant variables in Boids.cpp
 // ABS_WALL_POS            - absolute position of the walls in x,y,z
 // GRID_RES                - resolution of the grid
 // GRID_CELL_SIZE          - size of a cell, size / res of grid
